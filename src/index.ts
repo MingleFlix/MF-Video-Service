@@ -40,18 +40,18 @@ wss.on("connection", async (ws, req) => {
   console.log("WebSocket Token:", token);
 
   // Authenticate user via JWT
-  //   let user: any;
-  //   try {
-  //     user = authenticateJWT(token || "");
-  //   } catch (error) {
-  //     console.error("Error authenticating user:", error);
-  //   }
+  let user: any;
+  try {
+    user = authenticateJWT(token || "");
+  } catch (error) {
+    console.error("Error authenticating user:", error);
+  }
 
-  //   // Close connection if user room id is missing or user not found
-  //   if (!user || !roomID) {
-  //     ws.close();
-  //     return;
-  //   }
+  // Close connection if user room id is missing or user not found
+  if (!user || !roomID) {
+    ws.close();
+    return;
+  }
 
   // Add client to the list, in order to broadcast events to all clients
   console.log("Type:", type);
