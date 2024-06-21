@@ -10,4 +10,4 @@ spec:
     - port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}
   selector:
-    {{- include "room-management.selectorLabels" . | nindent 4 }}
+    {{- include "video-service.selectorLabels" . | nindent 4 }}
