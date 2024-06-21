@@ -3,7 +3,7 @@ version: '3.8'
 services:
   video:
     build: .
-    container_name: room-management
+    container_name: video-service
     ports:
       - "3002:3002"
     environment:
