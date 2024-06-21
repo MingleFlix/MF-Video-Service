@@ -8,8 +8,6 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
+      targetPort: {{ .Values.service.targetPort }}
   selector:
-    {{- include "video-service.selectorLabels" . | nindent 4 }}
+    {{- include "room-management.selectorLabels" . | nindent 4 }}
