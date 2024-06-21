@@ -1,33 +1,24 @@
-FROM node:21 as builder
+# Use the official Node.js image.
+FROM node:21
 
+# Create and change to the app directory.
 WORKDIR /usr/src/app
 
-COPY package*.json ./
 
+# Install dependencies.
+COPY package*.json ./
 RUN npm install
 
+# Copy the source code.
 COPY . .
-
-RUN npm run build
-
-# Step 2: Use a lighter base image for the production build
-FROM node:21-slim
-
-WORKDIR /usr/src/app
 
 # Set NODE_ENV to production by default
 ENV NODE_ENV=production
+# Build the TypeScript code.
+RUN npm run build
 
-COPY package*.json ./
-
-# Install only production dependencies
-RUN npm ci --only=production
-
-# Copy the built JS files from the builder stage
-COPY --from=builder /usr/src/app/dist ./dist
-
-# Expose the port the app runs on
-EXPOSE 3002
-
-# Command to run the application
+# Set the command to run the application.
 CMD ["node", "dist/index.js"]
+
+# Expose the port.
+EXPOSE 3002
