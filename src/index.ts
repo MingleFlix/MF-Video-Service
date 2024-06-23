@@ -39,10 +39,16 @@ wss.on("connection", async (ws, req) => {
   console.log("WebSocket Room:", roomID);
   console.log("WebSocket Token:", token);
 
+  if (!token) {
+    console.error("No token provided!");
+    ws.close();
+    return;
+  }
+
   // Authenticate user via JWT
   let user: any;
   try {
-    user = authenticateJWT(token || "");
+    user = authenticateJWT(token);
   } catch (error) {
     console.error("Error authenticating user:", error);
   }
@@ -85,4 +91,3 @@ wss.on("connection", async (ws, req) => {
     console.log("Closed websocket");
   });
 });
-
