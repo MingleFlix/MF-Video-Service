@@ -1,9 +1,12 @@
 import express from "express";
 import WebSocket from "ws";
+import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { authenticateJWT } from "./lib/authHelper";
 import { Client } from "./types/client";
 import { PlayerEvent } from "./types/events";
+
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3002;
