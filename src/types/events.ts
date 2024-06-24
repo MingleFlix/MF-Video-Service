@@ -5,7 +5,6 @@ export interface PlayerEvent {
    * user: name
    * time: video current time
    * url: video url
-   * sync: client sync request
    */
   room: string;
   event: string;
