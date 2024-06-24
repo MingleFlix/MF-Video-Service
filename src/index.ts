@@ -9,12 +9,22 @@ import { QueueEvent } from "./types/queue";
 
 dotenv.config();
 
+const QUEUE_ALLOWED_EVENTS = ["add-video", "sync-ack-queue", "delete-video"];
+const PLAYER_ALLOWED_EVENTS = [
+  "sync",
+  "sync-ack-play",
+  "sync-ack-pause",
+  "re-sync",
+  "play-video",
+  "play",
+  "pause",
+];
+
 const app = express();
 const port = process.env.PORT || 3002;
 
-// Use cookie parser
+// Middleware
 app.use(cookieParser());
-
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -28,37 +38,33 @@ const server = app.listen(port, () => {
 // Websocket server
 const wss = new WebSocket.Server({ server: server });
 
-// To-Do: Store inside redis
-const subscriberClients: Array<Client> = [];
-const queueItems: Array<QueueEvent> = [];
+// In-memory storage (consider moving to a persistent store like Redis)
+const subscriberClients: Client[] = [];
+const queueItems: QueueEvent[] = [];
 
+// Function to send events to subscribers
 const sendEventToSubscriber = (
-  clients: Array<Client>,
+  clients: Client[],
   event: PlayerEvent | QueueEvent,
   ws: WebSocket,
   message: string
 ) => {
-  var connectionCount = 0;
+  let connectionCount = 0;
+
   clients.forEach((client) => {
-    // Don't send event to closed sockets
-    if (client.socket.readyState !== WebSocket.OPEN) {
-      return;
-    }
-
-    // Only send event to clients in the same room
-    if (client.room !== event.room) {
-      return;
-    }
-
+    if (client.socket.readyState !== WebSocket.OPEN) return;
+    if (client.room !== event.room) return;
     // Don't send event back to the sender except if the queue asked to sync
-    if (client.socket === ws && event.event !== "sync-ack-queue") {
+    if (client.socket === ws && event.event !== "sync-ack-queue") return;
+    // Only send events to queue if allowed
+    if (client.type === "queue" && !QUEUE_ALLOWED_EVENTS.includes(event.event))
       return;
-    }
-
-    // Only send add-video events to the queue and not the player
-    if (event.event === "add-video" && client.type !== "queue") {
+    // Only send events to player if allowed
+    if (
+      client.type === "player" &&
+      !PLAYER_ALLOWED_EVENTS.includes(event.event)
+    )
       return;
-    }
 
     client.socket.send(message);
     connectionCount += 1;
@@ -77,9 +83,6 @@ wss.on("connection", async (ws, req) => {
   const roomID = params.get("roomID");
   const token = params.get("token");
   const type = params.get("type");
-
-  // console.log("WebSocket Room:", roomID);
-  // console.log("WebSocket Token:", token);
 
   if (!token) {
     console.error("No token provided!");
@@ -111,95 +114,101 @@ wss.on("connection", async (ws, req) => {
   ws.on("message", async (message) => {
     const event = JSON.parse(message as any) as PlayerEvent;
 
-    if (event.event === "sync-queue") {
-      let queue: QueueEvent = {
-        room: event.room,
-        event: "sync-ack-queue",
-        items: [],
-      };
-
-      queueItems.forEach((item) => {
-        if (item.room === event.room) {
-          queue = item;
-        }
-      });
-
-      sendEventToSubscriber(
-        subscriberClients,
-        queue,
-        ws,
-        JSON.stringify(queue)
-      );
-      return;
+    switch (event.event) {
+      case "sync-queue":
+        handleSyncQueueEvent(event, ws);
+        break;
+      case "add-video":
+        handleAddVideoEvent(event, ws);
+        break;
+      case "play-video":
+        handlePlayVideoEvent(event, ws);
+        break;
+      case "delete-video":
+        handleDeleteVideoEvent(event, ws);
+        break;
+      default:
+        sendEventToSubscriber(subscriberClients, event, ws, message.toString());
     }
-
-    if (event.event === "add-video") {
-      let queue: QueueEvent = {
-        room: event.room,
-        event: "add-video",
-        items: [{ user: event.user, url: event.url as string, active: false }],
-      };
-
-      let exists: boolean = false;
-      queueItems.forEach((item) => {
-        if (item.room === event.room) {
-          item.items?.push({
-            user: event.user,
-            url: event.url as string,
-            active: false,
-          });
-
-          queue = item;
-          exists = true;
-        }
-      });
-
-      if (!exists) {
-        queueItems.push(queue);
-      }
-
-      sendEventToSubscriber(
-        subscriberClients,
-        queue,
-        ws,
-        JSON.stringify(queue)
-      );
-      return;
-    }
-
-    if (event.event === "play-video") {
-      let queue: QueueEvent = {
-        room: event.room,
-        event: "play-video",
-        items: [{ user: event.user, url: event.url as string, active: false }],
-      };
-
-      queueItems.forEach((item) => {
-        if (item.room === event.room) {
-          item.items?.forEach((qItem) => {
-            if (qItem.url === event.url) {
-              qItem.active = true;
-            } else {
-              qItem.active = false;
-            }
-          });
-
-          queue = item;
-        }
-      });
-
-      sendEventToSubscriber(
-        subscriberClients,
-        queue,
-        ws,
-        JSON.stringify(queue)
-      );
-    }
-
-    sendEventToSubscriber(subscriberClients, event, ws, message.toString());
   });
 
   ws.on("close", () => {
     console.log("Closed websocket");
   });
 });
+
+// Event Handlers
+const handleSyncQueueEvent = (event: PlayerEvent, ws: WebSocket) => {
+  let queue = getQueueForRoom(event.room) || {
+    room: event.room,
+    event: "sync-ack-queue",
+    items: [],
+  };
+  sendEventToSubscriber(subscriberClients, queue, ws, JSON.stringify(queue));
+};
+
+const handleAddVideoEvent = (event: PlayerEvent, ws: WebSocket) => {
+  let queue = getQueueForRoom(event.room) || {
+    room: event.room,
+    event: "add-video",
+    items: [],
+  };
+  queue.items.push({
+    user: event.user,
+    url: event.url as string,
+    active: false,
+  });
+  updateQueueForRoom(queue);
+  sendEventToSubscriber(subscriberClients, queue, ws, JSON.stringify(queue));
+};
+
+const handlePlayVideoEvent = (event: PlayerEvent, ws: WebSocket) => {
+  let queue = getQueueForRoom(event.room);
+  if (queue) {
+    queue.items.forEach((item) => {
+      item.active = item.url === event.url;
+    });
+    queue.event = "sync-ack-queue";
+    updateQueueForRoom(queue);
+    sendEventToSubscriber(subscriberClients, queue, ws, JSON.stringify(queue));
+
+    const playerEvent: PlayerEvent = {
+      room: event.room,
+      event: "play-video",
+      user: event.user,
+      time: "0",
+      url: event.url,
+    };
+    sendEventToSubscriber(
+      subscriberClients,
+      playerEvent,
+      ws,
+      JSON.stringify(playerEvent)
+    );
+  }
+};
+
+const handleDeleteVideoEvent = (event: PlayerEvent, ws: WebSocket) => {
+  console.log("handleDeleteVideoEvent()");
+  let queue = getQueueForRoom(event.room);
+  if (queue) {
+    queue.items = queue.items.filter((item) => item.url !== event.url);
+    queue.event = "sync-ack-queue";
+    updateQueueForRoom(queue);
+    sendEventToSubscriber(subscriberClients, queue, ws, JSON.stringify(queue));
+  }
+};
+
+const updateQueueForRoom = (queue: QueueEvent) => {
+  const index = queueItems.findIndex((item) => item.room === queue.room);
+  if (index !== -1) {
+    queueItems[index] = queue;
+  } else {
+    queueItems.push(queue);
+  }
+};
+
+// Helper functions
+const getQueueForRoom = (room: string): QueueEvent | undefined => {
+  return queueItems.find((queue) => queue.room === room);
+};

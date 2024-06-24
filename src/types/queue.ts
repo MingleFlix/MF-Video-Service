@@ -7,5 +7,5 @@ export interface QueueItem {
 export interface QueueEvent {
   room: string | null;
   event: string;
-  items: Array<QueueItem> | null;
+  items: Array<QueueItem>;
 }
