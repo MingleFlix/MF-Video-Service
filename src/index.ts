@@ -9,6 +9,7 @@ import { QueueEvent } from "./types/queue";
 
 dotenv.config();
 
+const VALID_TYPES = ["player", "queue", "input"];
 const QUEUE_ALLOWED_EVENTS = ["add-video", "sync-ack-queue", "delete-video"];
 const PLAYER_ALLOWED_EVENTS = [
   "sync",
@@ -86,6 +87,12 @@ wss.on("connection", async (ws, req) => {
 
   if (!token) {
     console.error("No token provided!");
+    ws.close();
+    return;
+  }
+
+  if (!type || !VALID_TYPES.includes(type)) {
+    console.error("Type not allowed!");
     ws.close();
     return;
   }
@@ -212,3 +219,5 @@ const updateQueueForRoom = (queue: QueueEvent) => {
 const getQueueForRoom = (room: string): QueueEvent | undefined => {
   return queueItems.find((queue) => queue.room === room);
 };
+
+export default server;
