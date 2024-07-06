@@ -2,6 +2,7 @@ import express from "express";
 import WebSocket from "ws";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import { createClient } from "redis";
 import { authenticateJWT } from "./lib/authHelper";
 import { Client } from "./types/client";
 import { PlayerEvent } from "./types/events";
@@ -9,6 +10,7 @@ import { QueueEvent } from "./types/queue";
 
 dotenv.config();
 
+const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const VALID_TYPES = ["player", "queue", "input"];
 const QUEUE_ALLOWED_EVENTS = ["add-video", "sync-ack-queue", "delete-video"];
 const PLAYER_ALLOWED_EVENTS = [
@@ -35,6 +37,21 @@ app.get("/", (req, res) => {
 const server = app.listen(port, () => {
   console.log(`Video Sync Service is running on http://localhost:${port}`);
 });
+
+// Redis Client
+let redisClient: any;
+let redisConnected = false;
+
+(async () => {
+  try {
+    redisClient = createClient({ url: `redis://${REDIS_HOST}:6379` });
+    await redisClient.connect();
+    redisConnected = true;
+    console.log("Connected to Redis");
+  } catch (error) {
+    console.error("Failed to connect to Redis, using in-memory storage");
+  }
+})();
 
 // Websocket server
 const wss = new WebSocket.Server({ server: server });
@@ -152,14 +169,14 @@ wss.on("connection", async (ws, req) => {
     }
   }, 30000);
 
-  ws.on('pong', () => {
-    console.log('Pong received');
+  ws.on("pong", () => {
+    console.log("Pong received");
   });
 });
 
 // Event Handlers
-const handleSyncQueueEvent = (event: PlayerEvent, ws: WebSocket) => {
-  let queue = getQueueForRoom(event.room) || {
+const handleSyncQueueEvent = async (event: PlayerEvent, ws: WebSocket) => {
+  let queue = (await getQueueForRoom(event.room)) || {
     room: event.room,
     event: "sync-ack-queue",
     items: [],
@@ -167,8 +184,8 @@ const handleSyncQueueEvent = (event: PlayerEvent, ws: WebSocket) => {
   sendEventToSubscriber(subscriberClients, queue, ws, JSON.stringify(queue));
 };
 
-const handleAddVideoEvent = (event: PlayerEvent, ws: WebSocket) => {
-  let queue = getQueueForRoom(event.room) || {
+const handleAddVideoEvent = async (event: PlayerEvent, ws: WebSocket) => {
+  let queue = (await getQueueForRoom(event.room)) || {
     room: event.room,
     event: "add-video",
     items: [],
@@ -178,18 +195,18 @@ const handleAddVideoEvent = (event: PlayerEvent, ws: WebSocket) => {
     url: event.url as string,
     active: false,
   });
-  updateQueueForRoom(queue);
+  await updateQueueForRoom(queue);
   sendEventToSubscriber(subscriberClients, queue, ws, JSON.stringify(queue));
 };
 
-const handlePlayVideoEvent = (event: PlayerEvent, ws: WebSocket) => {
-  let queue = getQueueForRoom(event.room);
+const handlePlayVideoEvent = async (event: PlayerEvent, ws: WebSocket) => {
+  let queue = await getQueueForRoom(event.room);
   if (queue) {
     queue.items.forEach((item) => {
       item.active = item.url === event.url;
     });
     queue.event = "sync-ack-queue";
-    updateQueueForRoom(queue);
+    await updateQueueForRoom(queue);
     sendEventToSubscriber(subscriberClients, queue, ws, JSON.stringify(queue));
 
     const playerEvent: PlayerEvent = {
@@ -208,29 +225,49 @@ const handlePlayVideoEvent = (event: PlayerEvent, ws: WebSocket) => {
   }
 };
 
-const handleDeleteVideoEvent = (event: PlayerEvent, ws: WebSocket) => {
+const handleDeleteVideoEvent = async (event: PlayerEvent, ws: WebSocket) => {
   console.log("handleDeleteVideoEvent()");
-  let queue = getQueueForRoom(event.room);
+  let queue = await getQueueForRoom(event.room);
   if (queue) {
     queue.items = queue.items.filter((item) => item.url !== event.url);
     queue.event = "sync-ack-queue";
-    updateQueueForRoom(queue);
+    await updateQueueForRoom(queue);
     sendEventToSubscriber(subscriberClients, queue, ws, JSON.stringify(queue));
   }
 };
 
-const updateQueueForRoom = (queue: QueueEvent) => {
-  const index = queueItems.findIndex((item) => item.room === queue.room);
-  if (index !== -1) {
-    queueItems[index] = queue;
+const updateQueueForRoom = async (queue: QueueEvent) => {
+  if (redisConnected) {
+    try {
+      await redisClient.set(`queue:${queue.room}`, JSON.stringify(queue));
+    } catch (error) {
+      console.error("Error updating queue in Redis:", error);
+    }
   } else {
-    queueItems.push(queue);
+    const index = queueItems.findIndex((item) => item.room === queue.room);
+    if (index !== -1) {
+      queueItems[index] = queue;
+    } else {
+      queueItems.push(queue);
+    }
   }
 };
 
 // Helper functions
-const getQueueForRoom = (room: string): QueueEvent | undefined => {
-  return queueItems.find((queue) => queue.room === room);
+const getQueueForRoom = async (
+  room: string
+): Promise<QueueEvent | undefined> => {
+  if (redisConnected) {
+    try {
+      const queue = await redisClient.get(`queue:${room}`);
+      return queue ? JSON.parse(queue) : undefined;
+    } catch (error) {
+      console.error("Error fetching queue from Redis:", error);
+      return undefined;
+    }
+  } else {
+    return queueItems.find((queue) => queue.room === room);
+  }
 };
 
 export default server;

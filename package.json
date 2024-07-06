@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "jest --silent",
+    "test": "jest --silent --runInBand --forceExit",
     "start": "ts-node src/index.ts",
     "build": "tsc",
     "serve": "node dist/index.js",
@@ -33,6 +33,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
+    "redis": "^4.6.15",
     "ws": "^8.17.1"
   }
 }
