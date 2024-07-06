@@ -8,8 +8,9 @@ dotenv.config();
 const ROOM_ID = "queuetest";
 const USER_TOKEN = generateUserToken();
 
-afterAll(() => {
+afterAll((done) => {
   app.close();
+  done();
 });
 
 describe("WebSocket Player", () => {
