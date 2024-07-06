@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   video:
@@ -11,9 +11,14 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     depends_on:
       - redis
+    networks:
+      - backend
 
   redis:
     image: redis:6.2
-    container_name: redis
-    ports:
-      - "6379:6379"
+    container_name: redis-video
+    networks:
+      - backend
+
+networks:
+  backend:
