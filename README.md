@@ -36,7 +36,7 @@ Mixture of ownership (e.g. the same function get's edited by different people) a
 // ====================== <Partial Author> ========================
 
 /*
- * Author: Vorname Nachname
+ * Partial: Vorname Nachname
  * Matrikelnummer: Nummer
  */
 
@@ -63,21 +63,7 @@ function fooBar() {
 
 #### Low Level Activity Diagram
 
-![Aktivitäsdiagramm](https://github.com/MingleFlix/MF-Video-Service/assets/34812414/b66f95e6-dc4b-4c43-8e0c-8eab3d001dfc)
-
-#### Sequence Diagram Player
-
-![Sequenzdiagramm Player](https://github.com/MingleFlix/MF-Video-Service/assets/34812414/36f2c6ae-a178-48fc-9f4d-c4847d18a1ba)
-
-#### Sequence Diagram Queue
-
-![Sequenzdiagramm Queue](https://github.com/MingleFlix/MF-Video-Service/assets/34812414/ee7ea975-591b-4d13-82f8-1e5faaa7a4b8)
-
-## Diagrams
-
-#### Low Level Activity Diagram
-
-![Aktivitäsdiagramm](https://github.com/MingleFlix/MF-Video-Service/assets/34812414/b66f95e6-dc4b-4c43-8e0c-8eab3d001dfc)
+![Aktivitäsdiagramm](https://github.com/MingleFlix/MF-Video-Service/assets/34812414/fcb80e6d-ff0a-40d8-a514-42ab47964a33)
 
 #### Sequence Diagram Player
 
