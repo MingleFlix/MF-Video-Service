@@ -1,3 +1,8 @@
+# ===========================
+# Author: Jesse Günzl
+# Matrikelnummer: 2577166
+# ===========================
+
 # Use the official Node.js image.
 FROM node:21
 

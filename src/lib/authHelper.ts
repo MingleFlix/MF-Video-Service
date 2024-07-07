@@ -1,5 +1,10 @@
 import jwt from "jsonwebtoken";
 
+/*
+ * Author: Jesse Günzl
+ * Matrikelnummer: 2577166
+ */
+
 export interface JWTPayload {
   userId: string;
   email: string;

@@ -3,6 +3,11 @@ import dotenv from "dotenv";
 import app from "../src/index";
 import generateUserToken from "./helper/auth";
 
+/*
+ * Author: Alexandre Kaul
+ * Matrikelnummer: 2552912
+ */
+
 dotenv.config();
 
 const ROOM_ID = "queuetest";

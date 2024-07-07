@@ -1,6 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { authenticateJWT, JWTPayload } from "../lib/authHelper";
 
+/*
+ * Author: Jesse Günzl
+ * Matrikelnummer: 2577166
+ */
+
 declare global {
   namespace Express {
     interface Request {

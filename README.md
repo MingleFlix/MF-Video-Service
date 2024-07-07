@@ -2,6 +2,52 @@
 
 This service is responsible for managing the video queue and syncing the video playback for all users in a room.
 
+## Author Notice
+
+**Primary** ownership of the code is marked at the top of each file with:
+
+```js
+/*
+ * Author: Vorname Nachname
+ * Matrikelnummer: Nummer
+ */
+```
+
+Secodary ownership (e.g. functions added by a different coder) are marked like this:
+
+```js
+// ====================== <Different Author> ========================
+
+/*
+ * Author: Vorname Nachname
+ * Matrikelnummer: Nummer
+ */
+
+function fooBar() {
+  return 42;
+}
+
+// ===================== </Different Author> ========================
+```
+
+Mixture of ownership (e.g. the same function get's edited by different people) are marked like this:
+
+```js
+// ====================== <Partial Author> ========================
+
+/*
+ * Author: Vorname Nachname
+ * Matrikelnummer: Nummer
+ */
+
+function fooBar() {
+  var theAnswerToEverything = 41;
+  return theAnswerToEverything + 1;
+}
+
+// ====================== </Partial Author> ========================
+```
+
 ## How to run the project
 
 1. Clone the repository
@@ -14,11 +60,29 @@ This service is responsible for managing the video queue and syncing the video p
 1. Run `npm run test` to start the server in development mode
 
 ## Diagrams
-#### Low Level Activity Diagram 
+
+#### Low Level Activity Diagram
+
 ![Aktivitäsdiagramm](https://github.com/MingleFlix/MF-Video-Service/assets/34812414/b66f95e6-dc4b-4c43-8e0c-8eab3d001dfc)
 
-#### Sequence Diagram Player 
+#### Sequence Diagram Player
+
 ![Sequenzdiagramm Player](https://github.com/MingleFlix/MF-Video-Service/assets/34812414/36f2c6ae-a178-48fc-9f4d-c4847d18a1ba)
 
 #### Sequence Diagram Queue
+
+![Sequenzdiagramm Queue](https://github.com/MingleFlix/MF-Video-Service/assets/34812414/ee7ea975-591b-4d13-82f8-1e5faaa7a4b8)
+
+## Diagrams
+
+#### Low Level Activity Diagram
+
+![Aktivitäsdiagramm](https://github.com/MingleFlix/MF-Video-Service/assets/34812414/b66f95e6-dc4b-4c43-8e0c-8eab3d001dfc)
+
+#### Sequence Diagram Player
+
+![Sequenzdiagramm Player](https://github.com/MingleFlix/MF-Video-Service/assets/34812414/36f2c6ae-a178-48fc-9f4d-c4847d18a1ba)
+
+#### Sequence Diagram Queue
+
 ![Sequenzdiagramm Queue](https://github.com/MingleFlix/MF-Video-Service/assets/34812414/ee7ea975-591b-4d13-82f8-1e5faaa7a4b8)

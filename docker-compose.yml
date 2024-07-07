@@ -1,5 +1,10 @@
 version: "3.8"
 
+# ===========================
+# Author: Jesse Günzl
+# Matrikelnummer: 2577166
+# ===========================
+
 services:
   video:
     build: .

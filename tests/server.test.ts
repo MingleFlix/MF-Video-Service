@@ -1,7 +1,12 @@
 import request from "supertest";
 import WebSocket from "ws";
 import dotenv from "dotenv";
-import app from "../src/index"; // Adjust the path to your app
+import app from "../src/index";
+
+/*
+ * Author: Alexandre Kaul
+ * Matrikelnummer: 2552912
+ */
 
 dotenv.config();
 
